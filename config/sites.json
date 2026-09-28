@@ -1,0 +1,46 @@
+{
+  "sites": [
+    {
+      "id": "modulax",
+      "name": "Modulax",
+      "domain": "modulax.mx",
+      "origins": [
+        "https://modulax.mx",
+        "https://www.modulax.mx"
+      ],
+      "from": "Modulax <no-reply@modulax.mx>",
+      "publicKeyHashes": [
+        "54f13929adba3e6b49003edddd073122865f4ad20244a8152ce73ae6307fa7a9"
+      ],
+      "secretKeyHashes": [
+        "d41cd00e60881820ea845ef3733add87c1d2b994cfe2476f5be997efeca99e4a"
+      ],
+      "templates": [
+        "contact",
+        "notification"
+      ],
+      "defaultLocale": "es"
+    },
+    {
+      "id": "editandoideas",
+      "name": "Editando Ideas",
+      "domain": "editandoideas.com",
+      "origins": [
+        "https://editandoideas.com",
+        "https://www.editandoideas.com"
+      ],
+      "from": "Editando Ideas <no-reply@editandoideas.com>",
+      "publicKeyHashes": [
+        "e73f068939e39c21f38eec5840ac38922ccf5b264f43e4fd71373a792ec0e249"
+      ],
+      "secretKeyHashes": [
+        "93129c28562b607ed460895c62e32598e4f5d1c8257ebd3c72fc18ace7b2c48c"
+      ],
+      "templates": [
+        "contact",
+        "notification"
+      ],
+      "defaultLocale": "es"
+    }
+  ]
+}
