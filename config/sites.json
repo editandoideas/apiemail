@@ -19,7 +19,8 @@
         "contact",
         "notification"
       ],
-      "defaultLocale": "es"
+      "defaultLocale": "es",
+      "recaptchaSecretEnv": "RECAPTCHA_SECRET_MODULAX"
     },
     {
       "id": "editandoideas",
