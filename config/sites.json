@@ -28,6 +28,9 @@
       "id": "editandoideas",
       "name": "Editando Ideas",
       "domain": "editandoideas.com",
+      "to": [
+        "tania@editandoideas.com"
+      ],
       "origins": [
         "https://editandoideas.com",
         "https://www.editandoideas.com"
@@ -43,7 +46,8 @@
         "contact",
         "notification"
       ],
-      "defaultLocale": "es"
+      "defaultLocale": "es",
+      "recaptchaSecretEnv": "RECAPTCHA_SECRET_EDITANDOIDEAS"
     }
   ]
 }
