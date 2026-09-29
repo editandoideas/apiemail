@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { z } from 'zod';
 import { TEMPLATES } from '../templates/index.js';
+import { MARCAS } from '../templates/marcas/index.js';
 
 const sha256Hex = z.string().regex(/^[a-f0-9]{64}$/, 'debe ser un hash sha256 en hex');
 const origin = z
@@ -24,6 +25,10 @@ const siteSchema = z.object({
   turnstileSecretEnv: z.string().regex(/^[A-Z0-9_]+$/).optional(),
   // Nombre de la variable de entorno con la secret key de Google reCAPTCHA del sitio.
   recaptchaSecretEnv: z.string().regex(/^[A-Z0-9_]+$/).optional(),
+  // Identidad de marca para los correos del sitio (ver templates/marcas).
+  brand: z.enum(Object.keys(MARCAS)).optional(),
+  // Acuse de recibo de marca para quien llena el formulario de contacto. Exige brand y captcha.
+  autoReply: z.boolean().default(false),
   enabled: z.boolean().default(true),
 });
 
@@ -50,6 +55,13 @@ export function buildRegistry(raw, { defaultFromAddress, env = process.env } = {
       turnstileSecret: s.turnstileSecretEnv ? env[s.turnstileSecretEnv] : undefined,
       recaptchaSecret: s.recaptchaSecretEnv ? env[s.recaptchaSecretEnv] : undefined,
     };
+    // El acuse escribe a una dirección que pone el visitante: sin captcha sería un relay.
+    if (s.autoReply && !s.brand) {
+      throw new Error(`sites: "${s.id}" tiene autoReply sin brand`);
+    }
+    if (s.autoReply && !s.turnstileSecretEnv && !s.recaptchaSecretEnv) {
+      throw new Error(`sites: "${s.id}" tiene autoReply sin captcha (turnstileSecretEnv o recaptchaSecretEnv)`);
+    }
     for (const [name, value] of [[s.turnstileSecretEnv, site.turnstileSecret], [s.recaptchaSecretEnv, site.recaptchaSecret]]) {
       if (name && !value) throw new Error(`sites: falta la variable ${name} para "${s.id}"`);
     }

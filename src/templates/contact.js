@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { escapeHtml, escapeMultiline, singleLine } from './escape.js';
+import { MARCAS } from './marcas/index.js';
 
 const noNewlines = (max) => z.string().trim().min(1).max(max).regex(/^[^\r\n]*$/, 'sin saltos de linea');
 
@@ -74,6 +75,9 @@ export function render(site, data, locale) {
 <p style="font-size:12px;color:#777">${escapeHtml(t.footer(site.domain))}</p>
 </body></html>`;
 
+  // Sitio con marca propia: el aviso sale con su identidad. El texto plano es el mismo.
+  const marca = site.brand && MARCAS[site.brand].aviso({ data, rows, site, conAcuse: Boolean(site.autoReply) });
+
   const text = [
     t.heading,
     '',
@@ -90,8 +94,10 @@ export function render(site, data, locale) {
     // El destinatario SIEMPRE sale del registro del sitio, nunca de la peticion.
     to: site.to,
     replyTo: data.email,
-    subject: singleLine(data.subject ? `[${site.name}] ${data.subject}` : t.subject(site.name, data.name)),
-    html,
+    subject: singleLine(
+      data.subject ? `[${site.name}] ${data.subject}` : marca ? marca.subject : t.subject(site.name, data.name),
+    ),
+    html: marca ? marca.html : html,
     text,
   };
 }

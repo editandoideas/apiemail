@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { authenticate } from '../middleware/auth.js';
 import { HttpError, errorBody, log } from '../lib/http.js';
 import { TEMPLATES } from '../templates/index.js';
+import { renderAcuse } from '../templates/marcas/index.js';
 
 const envelopeSchema = z.object({
   template: z.string().min(1).max(40),
@@ -96,6 +97,33 @@ export function sendRouter({ registry, mailer, verifyTurnstile, verifyRecaptcha,
     );
 
     log('INFO', 'email_sent', { site: site.id, template: templateId, keyKind, resendId: id });
+
+    // Acuse de recibo para el visitante. Va después del correo al sitio y no lo
+    // condiciona: si falla, la solicitud ya llegó y la respuesta sigue siendo 202.
+    if (templateId === 'contact' && site.autoReply) {
+      try {
+        const acuse = renderAcuse(site.brand, parsed.data);
+        const { id: acuseId } = await mailer.send(
+          {
+            from: site.from,
+            to: [parsed.data.email],
+            subject: acuse.subject,
+            html: acuse.html,
+            text: acuse.text,
+            replyTo: acuse.replyTo,
+            tags: [
+              { name: 'site', value: site.id },
+              { name: 'template', value: 'acuse' },
+            ],
+          },
+          { idempotencyKey: idempotencyKey && `${site.id}:${idempotencyKey}:acuse` },
+        );
+        log('INFO', 'autoreply_sent', { site: site.id, resendId: acuseId });
+      } catch (err) {
+        log('WARNING', 'autoreply_failed', { site: site.id, error: err.message });
+      }
+    }
+
     res.status(202).json({ id, status: 'accepted' });
   });
 

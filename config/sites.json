@@ -20,7 +20,9 @@
         "notification"
       ],
       "defaultLocale": "es",
-      "recaptchaSecretEnv": "RECAPTCHA_SECRET_MODULAX"
+      "recaptchaSecretEnv": "RECAPTCHA_SECRET_MODULAX",
+      "brand": "modulax",
+      "autoReply": true
     },
     {
       "id": "editandoideas",

@@ -33,6 +33,14 @@ Por qué no basta con «API key + CORS»:
 - En `sites.json` solo se guardan hashes SHA-256 de las keys. Las keys en claro se entregan al sitio y no se versionan (`keys.local.md` está en `.gitignore`).
 - Otras protecciones: HTML escapado, sin saltos de línea en nombre y asunto, cuerpo máximo de 300 KB y helmet. Los logs no guardan contenido ni correos de visitantes.
 
+**Acuse de recibo (`autoReply`).** Es la única excepción a «la key pública no decide el destinatario»: si un sitio declara `brand: "<id>"` y `autoReply: true`, tras el correo de contacto se envía un acuse de marca a la dirección que dejó el visitante. Para que no sirva de relay:
+
+- `brand` sola solo cambia la identidad del aviso que llega al buzón del sitio.
+- El registro no arranca si el sitio tiene `autoReply` sin `brand` o sin captcha (`recaptchaSecretEnv` o `turnstileSecretEnv`).
+- El contenido es fijo (`src/templates/marcas/<id>.js`). Del visitante solo se usa el nombre de pila, filtrado a letras (máx. 30); su mensaje nunca se repite.
+- Si el acuse falla, la petición sigue respondiendo 202: el correo al sitio ya salió. Se registra `autoreply_failed`.
+- Lleva su propia `Idempotency-Key` (`<sitio>:<key>:acuse`) y `replyTo` al buzón del sitio.
+
 El rate limit es en memoria, por instancia. Con Cloud Run y varias instancias el tope real se multiplica. Si hace falta uno global, se mueve a Redis o Firestore.
 
 ## API
