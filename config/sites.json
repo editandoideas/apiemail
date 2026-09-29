@@ -47,7 +47,9 @@
         "notification"
       ],
       "defaultLocale": "es",
-      "recaptchaSecretEnv": "RECAPTCHA_SECRET_EDITANDOIDEAS"
+      "recaptchaSecretEnv": "RECAPTCHA_SECRET_EDITANDOIDEAS",
+      "brand": "editandoideas",
+      "autoReply": true
     }
   ]
 }

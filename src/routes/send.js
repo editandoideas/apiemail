@@ -102,7 +102,7 @@ export function sendRouter({ registry, mailer, verifyTurnstile, verifyRecaptcha,
     // condiciona: si falla, la solicitud ya llegó y la respuesta sigue siendo 202.
     if (templateId === 'contact' && site.autoReply) {
       try {
-        const acuse = renderAcuse(site.brand, parsed.data);
+        const acuse = renderAcuse(site.brand, parsed.data, locale ?? site.defaultLocale);
         const { id: acuseId } = await mailer.send(
           {
             from: site.from,

@@ -11,6 +11,7 @@ const SK = 'sk_live_test_modulax';
 const PK_TURNSTILE = 'pk_live_test_turnstile';
 const PK_RECAPTCHA = 'pk_live_test_recaptcha';
 const PK_ACUSE = 'pk_live_test_acuse';
+const PK_EI = 'pk_live_test_editandoideas';
 const ORIGIN = 'https://modulax.mx';
 
 const contactData = { name: 'Ana', email: 'ana@example.com', message: 'Hola\n<b>quiero</b> info' };
@@ -54,6 +55,18 @@ function setup({ ipLimit = 100 } = {}) {
           publicKeyHashes: [hashKey(PK_ACUSE)],
           recaptchaSecretEnv: 'RECAPTCHA_SECRET_TEST',
           brand: 'modulax',
+          autoReply: true,
+        },
+        {
+          id: 'editandoideas',
+          name: 'Editando Ideas',
+          domain: 'editandoideas.com',
+          origins: ['https://www.editandoideas.com'],
+          to: ['tania@editandoideas.com'],
+          from: 'Editando Ideas <no-reply@editandoideas.com>',
+          publicKeyHashes: [hashKey(PK_EI)],
+          recaptchaSecretEnv: 'RECAPTCHA_SECRET_TEST',
+          brand: 'editandoideas',
           autoReply: true,
         },
       ],
@@ -358,5 +371,53 @@ describe('infraestructura', () => {
       .send('{bad');
     expect(res.status).toBe(400);
     expect((await request(ctx.app).get('/health')).status).toBe(200);
+  });
+});
+
+describe('marca editandoideas', () => {
+  const opts = { key: PK_EI, origin: 'https://www.editandoideas.com' };
+  const datos = {
+    name: 'Laura Méndez',
+    email: 'laura@example.com',
+    company: 'Acme <b>SA</b>',
+    message: 'Mensaje PRIVADO',
+    fields: { tema: 'consulting' },
+    pageUrl: 'https://www.editandoideas.com/en/contact',
+  };
+  const enviar = (data = datos, locale = 'en') =>
+    post(ctx.app, { template: 'contact', locale, data, recaptchaToken: 'tok' }, opts);
+
+  it('el aviso llega a tania@ con el tema por nombre, idioma y todo escapado', async () => {
+    await enviar();
+    const [aviso] = ctx.mailer.send.mock.calls[0];
+    expect(aviso.to).toEqual(['tania@editandoideas.com']);
+    expect(aviso.replyTo).toBe('laura@example.com');
+    expect(aviso.subject).toBe('Nuevo mensaje · Necesito definir el problema · Acme <b>SA</b> · Laura Méndez');
+    expect(aviso.html).toContain('Acme &lt;b&gt;SA&lt;/b&gt;');
+    expect(aviso.html).toContain('responder en inglés');
+    expect(aviso.html).not.toContain('>tema<');
+  });
+
+  it('el acuse sale en el idioma de la página y recomienda según el tema', async () => {
+    await enviar();
+    const [acuse] = ctx.mailer.send.mock.calls[1];
+    expect(acuse.to).toEqual(['laura@example.com']);
+    expect(acuse.replyTo).toBe('tania@editandoideas.com');
+    expect(acuse.subject).toBe('We got your message · Editando Ideas');
+    expect(acuse.html).toContain('Thank you, Laura.');
+    expect(acuse.html).toContain('/en/consulting/technical-audit?utm_source=acuse');
+    expect(acuse.html).toContain('/en/blog/what-a-technical-audit-includes');
+    for (const cuerpo of [acuse.html, acuse.text]) {
+      expect(cuerpo).not.toContain('PRIVADO');
+      expect(cuerpo).not.toContain('Acme');
+    }
+  });
+
+  it('un tema desconocido no se repite y usa la selección general', async () => {
+    await enviar({ ...datos, fields: { tema: 'https://spam.example' } }, 'es');
+    const [acuse] = ctx.mailer.send.mock.calls[1];
+    expect(acuse.html).toContain('Gracias, Laura.');
+    expect(acuse.html).toContain('/soluciones?utm_source=acuse');
+    expect(acuse.html).not.toContain('spam.example');
   });
 });

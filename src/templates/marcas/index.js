@@ -1,3 +1,4 @@
+import * as editandoideas from './editandoideas.js';
 import * as modulax from './modulax.js';
 
 /**
@@ -8,9 +9,10 @@ import * as modulax from './modulax.js';
  *
  * El acuse es la única excepción a "la key pública nunca decide el destinatario", así que el
  * contenido es fijo: del visitante sólo se usa el nombre de pila, filtrado por
- * `nombreDePila()`. Nada más de lo que escribió se repite en el acuse.
+ * `nombreDePila()`. Nada más de lo que escribió se repite en el acuse. `tema`
+ * (`data.fields.tema`) y el idioma solo eligen entre textos fijos de la marca.
  */
-export const MARCAS = { modulax };
+export const MARCAS = { editandoideas, modulax };
 
 // Primera palabra del nombre, sólo letras (con apóstrofo o guion) y hasta 30 caracteres.
 // Cualquier otra cosa —un enlace, un dominio, un texto publicitario— se descarta y el
@@ -20,6 +22,6 @@ export function nombreDePila(nombre) {
   return /^\p{L}[\p{L}'-]{0,29}$/u.test(primera) ? primera : null;
 }
 
-export function renderAcuse(id, { name }) {
-  return MARCAS[id].acuse({ nombre: nombreDePila(name) });
+export function renderAcuse(id, { name, fields }, locale) {
+  return MARCAS[id].acuse({ nombre: nombreDePila(name), tema: fields?.tema, locale });
 }
