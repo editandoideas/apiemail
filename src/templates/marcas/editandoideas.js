@@ -143,7 +143,7 @@ const T = {
     saludo: (n) => (n ? `Gracias, ${n}.` : 'Gracias por escribirnos.'),
     titular: 'Tu mensaje ya está con quien va a responderte.',
     intro: 'Lo leemos con calma antes de proponer nada y te contestamos al correo que nos dejaste. Atendemos de lunes a viernes, de 9:00 a 18:00, hora de Ciudad de México (UTC−6).',
-    fotoAlt: 'Fundadores de Editando Ideas',
+    fotoAlt: 'Equipo revisando reportes y gráficas sobre una mesa',
     mientras: 'Mientras tanto',
     mientrasTitulo: 'Adelanta la conversación',
     mientrasTexto: 'Elegimos estas páginas según lo que nos contaste. Llegar con esto revisado hace más útil la primera llamada.',
@@ -166,7 +166,7 @@ const T = {
     saludo: (n) => (n ? `Thank you, ${n}.` : 'Thank you for writing to us.'),
     titular: 'Your message is with the person who will reply.',
     intro: 'We read it carefully before proposing anything, and we reply to the email address you gave us. We work Monday to Friday, 9:00 to 18:00 Mexico City time (UTC−6).',
-    fotoAlt: 'Editando Ideas founders',
+    fotoAlt: 'A team reviewing reports and charts on a table',
     mientras: 'Meanwhile',
     mientrasTitulo: 'Get a head start',
     mientrasTexto: 'We picked these pages based on what you told us. Coming in with them reviewed makes the first call more useful.',
@@ -291,9 +291,9 @@ export function acuse({ nombre, tema, locale }) {
     <p style="margin:16px 0 0;font-family:${SANS};font-size:16px;line-height:25px;color:${C.claroSec}">${t.intro}</p>
   </td></tr>
 
-  <!-- Foto del equipo -->
+  <!-- Foto de trabajo (Pexels 3184292, fauxels; public/img/IMAGE-CREDITS.md) -->
   <tr><td style="font-size:0;line-height:0">
-    <img src="${img('fundadores-muro-og.jpg')}" width="600" alt="${t.fotoAlt}" style="display:block;width:100%;max-width:600px;height:auto;border:0">
+    <img src="${img('reportes-mesa-1024.jpg')}" width="600" height="338" alt="${t.fotoAlt}" style="display:block;width:100%;max-width:600px;height:auto;border:0">
   </td></tr>
 
   <!-- Páginas recomendadas -->
