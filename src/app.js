@@ -6,7 +6,7 @@ import { sendRouter } from './routes/send.js';
 import { errorHandler, notFound } from './middleware/errors.js';
 import { errorBody } from './lib/http.js';
 
-export function createApp({ registry, mailer, verifyTurnstile, env }) {
+export function createApp({ registry, mailer, verifyTurnstile, verifyRecaptcha, env }) {
   const app = express();
   app.disable('x-powered-by');
   app.set('trust proxy', env.trustProxy);
@@ -38,7 +38,7 @@ export function createApp({ registry, mailer, verifyTurnstile, env }) {
     }),
   );
   app.use('/v1', express.json({ limit: '300kb' }));
-  app.use('/v1', sendRouter({ registry, mailer, verifyTurnstile, env }));
+  app.use('/v1', sendRouter({ registry, mailer, verifyTurnstile, verifyRecaptcha, env }));
 
   app.use(notFound);
   app.use(errorHandler);

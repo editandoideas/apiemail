@@ -29,7 +29,7 @@ Por qué no basta con «API key + CORS»:
 
 - Una key en el frontend es pública. Por eso la key pública nunca decide el destinatario. Aunque se filtre, no sirve como relay de spam: solo puede escribir al buzón de contacto del propio sitio.
 - CORS solo lo respetan los navegadores; `curl` lo ignora. Aquí el `Origin` además se valida en el servidor contra el sitio de la key. Eso frena el uso de la key desde otros sitios web, aunque un script sí puede falsificar `Origin`.
-- Contra bots: honeypot `website` (responde 202 sin enviar), rate limit por IP (5/min) y por sitio (100/h), y **Cloudflare Turnstile opcional por sitio** (recomendado en cuanto llegue spam).
+- Contra bots: honeypot `website` (responde 202 sin enviar), rate limit por IP (5/min) y por sitio (100/h), y **captcha opcional por sitio** (Cloudflare Turnstile o Google reCAPTCHA) (recomendado en cuanto llegue spam).
 - En `sites.json` solo se guardan hashes SHA-256 de las keys. Las keys en claro se entregan al sitio y no se versionan (`keys.local.md` está en `.gitignore`).
 - Otras protecciones: HTML escapado, sin saltos de línea en nombre y asunto, cuerpo máximo de 300 KB y helmet. Los logs no guardan contenido ni correos de visitantes.
 
@@ -56,6 +56,7 @@ Cabeceras: `X-Api-Key: <key>` o `Authorization: Bearer <key>`; opcional `Idempot
     "pageUrl": "https://modulax.mx/contacto"
   },
   "turnstileToken": "…",
+  "recaptchaToken": "…",
   "website": ""
 }
 ```
@@ -81,7 +82,9 @@ El sitio que llama debe permitir el dominio en su CSP: `connect-src https://apie
 1. `npm run key:new -- public` (y `secret` si tiene backend).
 2. Agregar el sitio a `config/sites.json` con `id`, `name`, `domain`, `origins` y los hashes. Si no se indica `to`, se envía a `contacto@<domain>`.
 3. Remitente: sin `from` se usa `"<name> <DEFAULT_FROM_ADDRESS>"`. Si el dominio del cliente está verificado en Resend, se puede poner `"from": "Cliente <no-reply@cliente.com>"`, que mejora la entregabilidad.
-4. Turnstile (opcional): `"turnstileSecretEnv": "TURNSTILE_SECRET_CLIENTE"` y definir esa variable.
+4. Captcha (opcional, solo aplica a la public key). Primero se define la variable en el hosting y después se agrega el campo al sitio: si el campo existe y la variable no, la app no arranca.
+   - Turnstile: `"turnstileSecretEnv": "TURNSTILE_SECRET_CLIENTE"`; el sitio manda `turnstileToken`.
+   - Google reCAPTCHA (v2 invisible o v3): `"recaptchaSecretEnv": "RECAPTCHA_SECRET_CLIENTE"`; el sitio manda `recaptchaToken`. En v3 se exige score ≥ 0.5.
 5. Para agregar un tipo de correo nuevo: crear el módulo en `src/templates/` con `{ schema, render }`, registrarlo en `src/templates/index.js` y habilitarlo en `templates` del sitio.
 
 ## Despliegue (pendiente)

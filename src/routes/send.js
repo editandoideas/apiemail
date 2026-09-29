@@ -10,13 +10,14 @@ const envelopeSchema = z.object({
   locale: z.enum(['es', 'en']).optional(),
   data: z.record(z.string(), z.unknown()),
   turnstileToken: z.string().max(2048).optional(),
+  recaptchaToken: z.string().max(4096).optional(),
   // Honeypot: campo oculto en el formulario. Si un bot lo llena, se simula el envio.
   website: z.string().max(500).optional(),
 });
 
 const rateLimited = errorBody('rate_limited', 'Demasiadas peticiones, intenta mas tarde');
 
-export function sendRouter({ registry, mailer, verifyTurnstile, env }) {
+export function sendRouter({ registry, mailer, verifyTurnstile, verifyRecaptcha, env }) {
   const router = Router();
 
   // Por IP solo para keys publicas: la secret la usa un backend que concentra a todos sus usuarios.
@@ -46,7 +47,7 @@ export function sendRouter({ registry, mailer, verifyTurnstile, env }) {
     if (!envelope.success) {
       throw new HttpError(400, 'invalid_request', 'Peticion invalida', z.flattenError(envelope.error).fieldErrors);
     }
-    const { template: templateId, locale, data, turnstileToken, website } = envelope.data;
+    const { template: templateId, locale, data, turnstileToken, recaptchaToken, website } = envelope.data;
 
     const template = Object.hasOwn(TEMPLATES, templateId) ? TEMPLATES[templateId] : undefined;
     if (!template || !site.templates.includes(templateId)) {
@@ -63,6 +64,10 @@ export function sendRouter({ registry, mailer, verifyTurnstile, env }) {
 
     if (keyKind === 'public' && site.turnstileSecret) {
       const ok = await verifyTurnstile({ secret: site.turnstileSecret, token: turnstileToken, remoteIp: req.ip });
+      if (!ok) throw new HttpError(403, 'captcha_failed', 'Verificacion anti-spam fallida');
+    }
+    if (keyKind === 'public' && site.recaptchaSecret) {
+      const ok = await verifyRecaptcha({ secret: site.recaptchaSecret, token: recaptchaToken, remoteIp: req.ip });
       if (!ok) throw new HttpError(403, 'captcha_failed', 'Verificacion anti-spam fallida');
     }
 

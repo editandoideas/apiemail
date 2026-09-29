@@ -9,6 +9,7 @@ import { MailerError } from '../src/services/mailer.js';
 const PK = 'pk_live_test_modulax';
 const SK = 'sk_live_test_modulax';
 const PK_TURNSTILE = 'pk_live_test_turnstile';
+const PK_RECAPTCHA = 'pk_live_test_recaptcha';
 const ORIGIN = 'https://modulax.mx';
 
 const contactData = { name: 'Ana', email: 'ana@example.com', message: 'Hola\n<b>quiero</b> info' };
@@ -35,14 +36,31 @@ function setup({ ipLimit = 100 } = {}) {
           publicKeyHashes: [hashKey(PK_TURNSTILE)],
           turnstileSecretEnv: 'TURNSTILE_SECRET_TEST',
         },
+        {
+          id: 'recaptcha',
+          name: 'Recaptcha',
+          domain: 'recaptcha.com',
+          origins: ['https://recaptcha.com'],
+          publicKeyHashes: [hashKey(PK_RECAPTCHA)],
+          recaptchaSecretEnv: 'RECAPTCHA_SECRET_TEST',
+        },
       ],
     },
-    { defaultFromAddress: 'no-reply@editandoideas.com', env: { TURNSTILE_SECRET_TEST: 'x' } },
+    {
+      defaultFromAddress: 'no-reply@editandoideas.com',
+      env: { TURNSTILE_SECRET_TEST: 'x', RECAPTCHA_SECRET_TEST: 'y' },
+    },
   );
   const mailer = { send: vi.fn().mockResolvedValue({ id: 're_123' }) };
   const verifyTurnstile = vi.fn().mockResolvedValue(true);
+  const verifyRecaptcha = vi.fn().mockResolvedValue(true);
   const env = { ...loadEnv({}), trustProxy: 0, rateLimitIpPerMinute: ipLimit };
-  return { app: createApp({ registry, mailer, verifyTurnstile, env }), mailer, verifyTurnstile };
+  return {
+    app: createApp({ registry, mailer, verifyTurnstile, verifyRecaptcha, env }),
+    mailer,
+    verifyTurnstile,
+    verifyRecaptcha,
+  };
 }
 
 let ctx;
@@ -138,6 +156,29 @@ describe('Turnstile', () => {
     });
     expect(res.status).toBe(403);
     expect(res.body.error.code).toBe('captcha_failed');
+  });
+});
+
+describe('reCAPTCHA', () => {
+  const opts = { key: PK_RECAPTCHA, origin: 'https://recaptcha.com' };
+
+  it('envia con token valido y pasa el secret del sitio', async () => {
+    const res = await post(ctx.app, { template: 'contact', data: contactData, recaptchaToken: 'tok' }, opts);
+    expect(res.status).toBe(202);
+    expect(ctx.verifyRecaptcha).toHaveBeenCalledWith(expect.objectContaining({ secret: 'y', token: 'tok' }));
+  });
+
+  it('rechaza si la verificacion falla', async () => {
+    ctx.verifyRecaptcha.mockResolvedValueOnce(false);
+    const res = await post(ctx.app, { template: 'contact', data: contactData }, opts);
+    expect(res.status).toBe(403);
+    expect(res.body.error.code).toBe('captcha_failed');
+    expect(ctx.mailer.send).not.toHaveBeenCalled();
+  });
+
+  it('no se exige a sitios sin reCAPTCHA', async () => {
+    await post(ctx.app, { template: 'contact', data: contactData });
+    expect(ctx.verifyRecaptcha).not.toHaveBeenCalled();
   });
 });
 

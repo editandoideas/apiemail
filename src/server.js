@@ -3,6 +3,7 @@ import { loadEnv } from './config/env.js';
 import { loadRegistry } from './config/sites.js';
 import { createResendMailer } from './services/mailer.js';
 import { verifyTurnstile } from './services/turnstile.js';
+import { verifyRecaptcha } from './services/recaptcha.js';
 import { log } from './lib/http.js';
 
 const env = loadEnv();
@@ -12,7 +13,13 @@ if (!env.resendApiKey) {
 }
 
 const registry = loadRegistry(env);
-const app = createApp({ registry, mailer: createResendMailer(env.resendApiKey), verifyTurnstile, env });
+const app = createApp({
+  registry,
+  mailer: createResendMailer(env.resendApiKey),
+  verifyTurnstile,
+  verifyRecaptcha,
+  env,
+});
 
 app.listen(env.port, () => {
   log('INFO', 'apiemail_listening', { port: env.port, sites: registry.sites.size });

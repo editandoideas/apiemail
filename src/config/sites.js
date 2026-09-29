@@ -22,6 +22,8 @@ const siteSchema = z.object({
   defaultLocale: z.enum(['es', 'en']).default('es'),
   // Nombre de la variable de entorno con el secret de Cloudflare Turnstile del sitio.
   turnstileSecretEnv: z.string().regex(/^[A-Z0-9_]+$/).optional(),
+  // Nombre de la variable de entorno con la secret key de Google reCAPTCHA del sitio.
+  recaptchaSecretEnv: z.string().regex(/^[A-Z0-9_]+$/).optional(),
   enabled: z.boolean().default(true),
 });
 
@@ -46,9 +48,10 @@ export function buildRegistry(raw, { defaultFromAddress, env = process.env } = {
       to: s.to ?? [`contacto@${s.domain}`],
       from: s.from ?? `${s.name} <${defaultFromAddress}>`,
       turnstileSecret: s.turnstileSecretEnv ? env[s.turnstileSecretEnv] : undefined,
+      recaptchaSecret: s.recaptchaSecretEnv ? env[s.recaptchaSecretEnv] : undefined,
     };
-    if (s.turnstileSecretEnv && !site.turnstileSecret) {
-      throw new Error(`sites: falta la variable ${s.turnstileSecretEnv} para "${s.id}"`);
+    for (const [name, value] of [[s.turnstileSecretEnv, site.turnstileSecret], [s.recaptchaSecretEnv, site.recaptchaSecret]]) {
+      if (name && !value) throw new Error(`sites: falta la variable ${name} para "${s.id}"`);
     }
     sites.set(site.id, site);
     if (!site.enabled) continue;
